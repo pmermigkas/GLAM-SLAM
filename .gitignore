@@ -1,0 +1,25 @@
+ORB_SLAM2/
+
+ORB_SLAM2-PythonBindings/build_Debug/
+ORB_SLAM2-PythonBindings/build_Release/
+ORB_SLAM2-PythonBindings/lib/
+
+GLAM_SLAM/cfg/liteflow_models/LiteFlowNet3-S-ft-kitti.caffemodel
+
+
+
+output/
+.vscode/
+
+
+
+# Compiled shared objects and binaries
+*.so
+*.o
+ORB_SLAM2-PythonBindings/testcore
+
+# Python build artifacts
+build/
+*.egg-info/
+*.pyc
+*.pyo

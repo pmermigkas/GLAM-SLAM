@@ -1,0 +1,1964 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 08a8af4..209a77f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -7,8 +7,23 @@ ENDIF()
+ 
+ MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
+ 
+-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
+-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -march=native")
++# --- CORRECTED FLAGS SETUP ---
++
++# 1. Set flags that apply to ALL build types (like warnings)
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
++
++# 2. Set flags specifically for RELEASE builds
++set(CMAKE_CXX_FLAGS_RELEASE "-O3")
++
++# 3. Set flags specifically for DEBUG builds
++#    -g adds debugging symbols
++#    -O0 disables all optimizations
++set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
++
++# --- REMOVE THE OLD HARDCODED LINES ---
++# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3")
++# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
++
+ 
+ # Check C++11 or C++0x support
+ include(CheckCXXCompilerFlag)
+@@ -28,11 +43,14 @@ endif()
+ 
+ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+ 
+-find_package(OpenCV 3.0 QUIET)
++find_package(OpenCV 4 QUIET)
+ if(NOT OpenCV_FOUND)
+-   find_package(OpenCV 2.4.3 QUIET)
++   find_package(OpenCV 3.0 QUIET)
+    if(NOT OpenCV_FOUND)
+-      message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
++      find_package(OpenCV 2.4.3 QUIET)
++      if(NOT OpenCV_FOUND)
++         message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
++      endif()
+    endif()
+ endif()
+ 
+@@ -111,3 +129,27 @@ add_executable(mono_euroc
+ Examples/Monocular/mono_euroc.cc)
+ target_link_libraries(mono_euroc ${PROJECT_NAME})
+ 
++# ---------------
++# Installation instructions.
++# Will install to CMAKE_INSTALL_PREFIX
++# This defaults to /usr/local/, specify -DCMAKE_INSTALL_PREFIX when calling cmake to specify an alternate location
++# e.g. cmake -DCMAKE_INSTALL_PREFIX="~/local"
++# ---------------
++
++install(TARGETS ${PROJECT_NAME}
++    DESTINATION  lib
++    COMPONENT library)
++install(FILES
++        ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
++        ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
++    DESTINATION lib
++    COMPONENT library)
++install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
++    DESTINATION include/ORB_SLAM2
++    COMPONENT library
++    FILES_MATCHING PATTERN "*.h"
++    PATTERN "Thirdparty" EXCLUDE)
++install(DIRECTORY ${PROJECT_SOURCE_DIR}/Thirdparty/
++    DESTINATION include/ORB_SLAM2/Thirdparty
++    COMPONENT library
++FILES_MATCHING REGEX ".*\\.h(pp)?")
+\ No newline at end of file
+diff --git a/Examples/Monocular/KITTI00-02.yaml b/Examples/Monocular/KITTI00-02.yaml
+index e4faba1..cd986da 100644
+--- a/Examples/Monocular/KITTI00-02.yaml
++++ b/Examples/Monocular/KITTI00-02.yaml
+@@ -1,4 +1,4 @@
+-%YAML:1.0
++%YAML 1.0
+ 
+ #--------------------------------------------------------------------------------------------
+ # Camera Parameters. Adjust them!
+@@ -15,8 +15,11 @@ Camera.k2: 0.0
+ Camera.p1: 0.0
+ Camera.p2: 0.0
+ 
++Camera.image_height: 376
++Camera.image_width: 1241
++
+ # Camera frames per second 
+-Camera.fps: 10.0
++Camera.fps: 10.0 #10.0
+ 
+ # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+ Camera.RGB: 1
+@@ -47,7 +50,7 @@ ORBextractor.minThFAST: 7
+ Viewer.KeyFrameSize: 0.1
+ Viewer.KeyFrameLineWidth: 1
+ Viewer.GraphLineWidth: 1
+-Viewer.PointSize:2
++Viewer.PointSize: 2
+ Viewer.CameraSize: 0.15
+ Viewer.CameraLineWidth: 2
+ Viewer.ViewpointX: 0
+diff --git a/Examples/Monocular/KITTI03.yaml b/Examples/Monocular/KITTI03.yaml
+index b081bd0..77deec1 100644
+--- a/Examples/Monocular/KITTI03.yaml
++++ b/Examples/Monocular/KITTI03.yaml
+@@ -15,6 +15,10 @@ Camera.k2: 0.0
+ Camera.p1: 0.0
+ Camera.p2: 0.0
+ 
++Camera.image_height: 375
++Camera.image_width: 1242
++
++
+ # Camera frames per second 
+ Camera.fps: 10.0
+ 
+@@ -47,7 +51,7 @@ ORBextractor.minThFAST: 7
+ Viewer.KeyFrameSize: 0.1
+ Viewer.KeyFrameLineWidth: 1
+ Viewer.GraphLineWidth: 1
+-Viewer.PointSize:2
++Viewer.PointSize: 2
+ Viewer.CameraSize: 0.15
+ Viewer.CameraLineWidth: 2
+ Viewer.ViewpointX: 0
+diff --git a/Examples/Monocular/KITTI04-12.yaml b/Examples/Monocular/KITTI04-12.yaml
+index e0e18c7..4b76c85 100644
+--- a/Examples/Monocular/KITTI04-12.yaml
++++ b/Examples/Monocular/KITTI04-12.yaml
+@@ -15,6 +15,10 @@ Camera.k2: 0.0
+ Camera.p1: 0.0
+ Camera.p2: 0.0
+ 
++Camera.image_height: 370
++Camera.image_width: 1226
++
++
+ # Camera frames per second 
+ Camera.fps: 10.0
+ 
+@@ -47,7 +51,7 @@ ORBextractor.minThFAST: 7
+ Viewer.KeyFrameSize: 0.1
+ Viewer.KeyFrameLineWidth: 1
+ Viewer.GraphLineWidth: 1
+-Viewer.PointSize:2
++Viewer.PointSize: 2
+ Viewer.CameraSize: 0.15
+ Viewer.CameraLineWidth: 2
+ Viewer.ViewpointX: 0
+diff --git a/Examples/Monocular/TUM1.yaml b/Examples/Monocular/TUM1.yaml
+index 145f792..17f9de1 100644
+--- a/Examples/Monocular/TUM1.yaml
++++ b/Examples/Monocular/TUM1.yaml
+@@ -16,6 +16,9 @@ Camera.p1: -0.005358
+ Camera.p2: 0.002628
+ Camera.k3: 1.163314
+ 
++Camera.image_height: 480
++Camera.image_width: 640
++
+ # Camera frames per second 
+ Camera.fps: 30.0
+ 
+@@ -48,7 +51,7 @@ ORBextractor.minThFAST: 7
+ Viewer.KeyFrameSize: 0.05
+ Viewer.KeyFrameLineWidth: 1
+ Viewer.GraphLineWidth: 0.9
+-Viewer.PointSize:2
++Viewer.PointSize: 2
+ Viewer.CameraSize: 0.08
+ Viewer.CameraLineWidth: 3
+ Viewer.ViewpointX: 0
+diff --git a/Examples/Monocular/mono_euroc.cc b/Examples/Monocular/mono_euroc.cc
+index 4bcb90f..00175ff 100644
+--- a/Examples/Monocular/mono_euroc.cc
++++ b/Examples/Monocular/mono_euroc.cc
+@@ -23,8 +23,10 @@
+ #include<algorithm>
+ #include<fstream>
+ #include<chrono>
++#include<unistd.h>
+ 
+ #include<opencv2/core/core.hpp>
++#include<opencv2/imgcodecs/legacy/constants_c.h>
+ 
+ #include<System.h>
+ 
+diff --git a/Examples/Monocular/mono_kitti.cc b/Examples/Monocular/mono_kitti.cc
+index f2f7b3e..2b74195 100644
+--- a/Examples/Monocular/mono_kitti.cc
++++ b/Examples/Monocular/mono_kitti.cc
+@@ -24,8 +24,10 @@
+ #include<fstream>
+ #include<chrono>
+ #include<iomanip>
++#include<unistd.h>
+ 
+ #include<opencv2/core/core.hpp>
++#include<opencv2/imgcodecs/legacy/constants_c.h>
+ 
+ #include"System.h"
+ 
+@@ -80,8 +82,14 @@ int main(int argc, char **argv)
+         std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
+ #endif
+ 
++        std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
++
+         // Pass the image to the SLAM system
+         SLAM.TrackMonocular(im,tframe);
++        std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
++        std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t4 - t3);
++
++        std::cout << "Track monocular took: " << time_span.count() << " seconds" << std::endl;
+ 
+ #ifdef COMPILEDWITHC11
+         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+diff --git a/Examples/Monocular/mono_tum.cc b/Examples/Monocular/mono_tum.cc
+index 09a2afc..5c6e68c 100644
+--- a/Examples/Monocular/mono_tum.cc
++++ b/Examples/Monocular/mono_tum.cc
+@@ -23,8 +23,10 @@
+ #include<algorithm>
+ #include<fstream>
+ #include<chrono>
++#include<unistd.h>
+ 
+ #include<opencv2/core/core.hpp>
++#include<opencv2/imgcodecs/legacy/constants_c.h>
+ 
+ #include<System.h>
+ 
+diff --git a/Examples/RGB-D/rgbd_tum.cc b/Examples/RGB-D/rgbd_tum.cc
+index 001199d..53d41d2 100644
+--- a/Examples/RGB-D/rgbd_tum.cc
++++ b/Examples/RGB-D/rgbd_tum.cc
+@@ -23,8 +23,10 @@
+ #include<algorithm>
+ #include<fstream>
+ #include<chrono>
++#include <unistd.h>
+ 
+ #include<opencv2/core/core.hpp>
++#include<opencv2/imgcodecs/legacy/constants_c.h>
+ 
+ #include<System.h>
+ 
+diff --git a/Examples/ROS/ORB_SLAM2/CMakeLists.txt b/Examples/ROS/ORB_SLAM2/CMakeLists.txt
+index 7cbf71c..d25c873 100644
+--- a/Examples/ROS/ORB_SLAM2/CMakeLists.txt
++++ b/Examples/ROS/ORB_SLAM2/CMakeLists.txt
+@@ -30,7 +30,7 @@ endif()
+ 
+ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../cmake_modules)
+ 
+-find_package(OpenCV 3.0 QUIET)
++find_package(OpenCV 4 QUIET)
+ if(NOT OpenCV_FOUND)
+    find_package(OpenCV 2.4.3 QUIET)
+    if(NOT OpenCV_FOUND)
+diff --git a/Examples/Stereo/stereo_euroc.cc b/Examples/Stereo/stereo_euroc.cc
+index 6bc09c5..b6149f6 100644
+--- a/Examples/Stereo/stereo_euroc.cc
++++ b/Examples/Stereo/stereo_euroc.cc
+@@ -24,8 +24,10 @@
+ #include<fstream>
+ #include<iomanip>
+ #include<chrono>
++#include<unistd.h>
+ 
+ #include<opencv2/core/core.hpp>
++#include<opencv2/imgcodecs/legacy/constants_c.h>
+ 
+ #include<System.h>
+ 
+diff --git a/Examples/Stereo/stereo_kitti.cc b/Examples/Stereo/stereo_kitti.cc
+index cb8bc40..5fd55a3 100644
+--- a/Examples/Stereo/stereo_kitti.cc
++++ b/Examples/Stereo/stereo_kitti.cc
+@@ -24,8 +24,10 @@
+ #include<fstream>
+ #include<iomanip>
+ #include<chrono>
++#include<unistd.h>
+ 
+ #include<opencv2/core/core.hpp>
++#include<opencv2/imgcodecs/legacy/constants_c.h>
+ 
+ #include<System.h>
+ 
+diff --git a/Thirdparty/DBoW2/CMakeLists.txt b/Thirdparty/DBoW2/CMakeLists.txt
+index 0eb5126..9fe0c74 100644
+--- a/Thirdparty/DBoW2/CMakeLists.txt
++++ b/Thirdparty/DBoW2/CMakeLists.txt
+@@ -1,8 +1,21 @@
+ cmake_minimum_required(VERSION 2.8)
+ project(DBoW2)
+ 
+-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
+-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -O3 -march=native")
++# --- CORRECTED FLAGS SETUP ---
++
++# 1. Set flags that apply to ALL build types (like warnings)
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
++
++# 2. Set flags specifically for RELEASE builds
++set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
++
++# 3. Set flags specifically for DEBUG builds
++#    -g adds debugging symbols
++#    -O0 disables all optimizations
++set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
++
++# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3")
++# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
+ 
+ set(HDRS_DBOW2
+   DBoW2/BowVector.h
+@@ -24,7 +37,7 @@ set(SRCS_DUTILS
+   DUtils/Random.cpp
+   DUtils/Timestamp.cpp)
+ 
+-find_package(OpenCV 3.0 QUIET)
++find_package(OpenCV 4 QUIET)
+ if(NOT OpenCV_FOUND)
+    find_package(OpenCV 2.4.3 QUIET)
+    if(NOT OpenCV_FOUND)
+@@ -38,3 +51,12 @@ include_directories(${OpenCV_INCLUDE_DIRS})
+ add_library(DBoW2 SHARED ${SRCS_DBOW2} ${SRCS_DUTILS})
+ target_link_libraries(DBoW2 ${OpenCV_LIBS})
+ 
++# --- ADDED INSTALLATION COMMANDS ---
++# Install the compiled shared library to the 'lib' directory
++install(TARGETS DBoW2 DESTINATION lib)
++
++# Install the header files to the 'include' directory
++install(DIRECTORY DBoW2 DUtils
++    DESTINATION include
++    FILES_MATCHING PATTERN "*.h"
++)
+\ No newline at end of file
+diff --git a/Thirdparty/g2o/CMakeLists.txt b/Thirdparty/g2o/CMakeLists.txt
+index 620e688..78de8da 100644
+--- a/Thirdparty/g2o/CMakeLists.txt
++++ b/Thirdparty/g2o/CMakeLists.txt
+@@ -54,8 +54,8 @@ IF(OPENMP_FOUND AND G2O_USE_OPENMP)
+ ENDIF(OPENMP_FOUND AND G2O_USE_OPENMP)
+ 
+ # Compiler specific options for gcc
+-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native") 
+-SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native") 
++SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
++SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
+ 
+ # activate warnings !!!
+ SET(g2o_C_FLAGS "${g2o_C_FLAGS} -Wall -W")
+@@ -82,7 +82,7 @@ configure_file(config.h.in ${g2o_SOURCE_DIR}/config.h)
+ INCLUDE_DIRECTORIES(
+ ${g2o_SOURCE_DIR}/core
+ ${g2o_SOURCE_DIR}/types
+-${g2o_SOURCE_DIR}/stuff 
++${g2o_SOURCE_DIR}/stuff
+ ${G2O_EIGEN3_INCLUDE})
+ 
+ # Include the subdirectories
+diff --git a/cmake_modules/FindEigen3.cmake b/cmake_modules/FindEigen3.cmake
+deleted file mode 100644
+index 8c2a734..0000000
+--- a/cmake_modules/FindEigen3.cmake
++++ /dev/null
+@@ -1,87 +0,0 @@
+-# - Try to find Eigen3 lib
+-#
+-# This module supports requiring a minimum version, e.g. you can do
+-#   find_package(Eigen3 3.1.2)
+-# to require version 3.1.2 or newer of Eigen3.
+-#
+-# Once done this will define
+-#
+-#  EIGEN3_FOUND - system has eigen lib with correct version
+-#  EIGEN3_INCLUDE_DIR - the eigen include directory
+-#  EIGEN3_VERSION - eigen version
+-
+-# Copyright (c) 2006, 2007 Montel Laurent, <montel@kde.org>
+-# Copyright (c) 2008, 2009 Gael Guennebaud, <g.gael@free.fr>
+-# Copyright (c) 2009 Benoit Jacob <jacob.benoit.1@gmail.com>
+-# Redistribution and use is allowed according to the terms of the 2-clause BSD license.
+-
+-if(NOT Eigen3_FIND_VERSION)
+-  if(NOT Eigen3_FIND_VERSION_MAJOR)
+-    set(Eigen3_FIND_VERSION_MAJOR 2)
+-  endif(NOT Eigen3_FIND_VERSION_MAJOR)
+-  if(NOT Eigen3_FIND_VERSION_MINOR)
+-    set(Eigen3_FIND_VERSION_MINOR 91)
+-  endif(NOT Eigen3_FIND_VERSION_MINOR)
+-  if(NOT Eigen3_FIND_VERSION_PATCH)
+-    set(Eigen3_FIND_VERSION_PATCH 0)
+-  endif(NOT Eigen3_FIND_VERSION_PATCH)
+-
+-  set(Eigen3_FIND_VERSION "${Eigen3_FIND_VERSION_MAJOR}.${Eigen3_FIND_VERSION_MINOR}.${Eigen3_FIND_VERSION_PATCH}")
+-endif(NOT Eigen3_FIND_VERSION)
+-
+-macro(_eigen3_check_version)
+-  file(READ "${EIGEN3_INCLUDE_DIR}/Eigen/src/Core/util/Macros.h" _eigen3_version_header)
+-
+-  string(REGEX MATCH "define[ \t]+EIGEN_WORLD_VERSION[ \t]+([0-9]+)" _eigen3_world_version_match "${_eigen3_version_header}")
+-  set(EIGEN3_WORLD_VERSION "${CMAKE_MATCH_1}")
+-  string(REGEX MATCH "define[ \t]+EIGEN_MAJOR_VERSION[ \t]+([0-9]+)" _eigen3_major_version_match "${_eigen3_version_header}")
+-  set(EIGEN3_MAJOR_VERSION "${CMAKE_MATCH_1}")
+-  string(REGEX MATCH "define[ \t]+EIGEN_MINOR_VERSION[ \t]+([0-9]+)" _eigen3_minor_version_match "${_eigen3_version_header}")
+-  set(EIGEN3_MINOR_VERSION "${CMAKE_MATCH_1}")
+-
+-  set(EIGEN3_VERSION ${EIGEN3_WORLD_VERSION}.${EIGEN3_MAJOR_VERSION}.${EIGEN3_MINOR_VERSION})
+-  if(${EIGEN3_VERSION} VERSION_LESS ${Eigen3_FIND_VERSION})
+-    set(EIGEN3_VERSION_OK FALSE)
+-  else(${EIGEN3_VERSION} VERSION_LESS ${Eigen3_FIND_VERSION})
+-    set(EIGEN3_VERSION_OK TRUE)
+-  endif(${EIGEN3_VERSION} VERSION_LESS ${Eigen3_FIND_VERSION})
+-
+-  if(NOT EIGEN3_VERSION_OK)
+-
+-    message(STATUS "Eigen3 version ${EIGEN3_VERSION} found in ${EIGEN3_INCLUDE_DIR}, "
+-                   "but at least version ${Eigen3_FIND_VERSION} is required")
+-  endif(NOT EIGEN3_VERSION_OK)
+-endmacro(_eigen3_check_version)
+-
+-if (EIGEN3_INCLUDE_DIR)
+-
+-  # in cache already
+-  _eigen3_check_version()
+-  set(EIGEN3_FOUND ${EIGEN3_VERSION_OK})
+-
+-else (EIGEN3_INCLUDE_DIR)
+-
+-  # specific additional paths for some OS
+-  if (WIN32)
+-    set(EIGEN_ADDITIONAL_SEARCH_PATHS ${EIGEN_ADDITIONAL_SEARCH_PATHS} "C:/Program Files/Eigen/include" "C:/Program Files (x86)/Eigen/include")
+-  endif(WIN32)
+-
+-  find_path(EIGEN3_INCLUDE_DIR NAMES signature_of_eigen3_matrix_library
+-      PATHS
+-      ${CMAKE_INSTALL_PREFIX}/include
+-      ${EIGEN_ADDITIONAL_SEARCH_PATHS}
+-      ${KDE4_INCLUDE_DIR}
+-      PATH_SUFFIXES eigen3 eigen
+-    )
+-
+-  if(EIGEN3_INCLUDE_DIR)
+-    _eigen3_check_version()
+-  endif(EIGEN3_INCLUDE_DIR)
+-
+-  include(FindPackageHandleStandardArgs)
+-  find_package_handle_standard_args(Eigen3 DEFAULT_MSG EIGEN3_INCLUDE_DIR EIGEN3_VERSION_OK)
+-
+-  mark_as_advanced(EIGEN3_INCLUDE_DIR)
+-
+-endif(EIGEN3_INCLUDE_DIR)
+-
+diff --git a/include/Frame.h b/include/Frame.h
+index a6a8032..176a7f5 100644
+--- a/include/Frame.h
++++ b/include/Frame.h
+@@ -23,6 +23,10 @@
+ 
+ #include<vector>
+ 
++#include <opencv2/opencv.hpp>
++#include <opencv2/core.hpp>
++#include <cstddef>
++
+ #include "MapPoint.h"
+ #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
+ #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+@@ -30,7 +34,7 @@
+ #include "KeyFrame.h"
+ #include "ORBextractor.h"
+ 
+-#include <opencv2/opencv.hpp>
++namespace ORB_SLAM2 { class ORBextractor; }
+ 
+ namespace ORB_SLAM2
+ {
+diff --git a/include/KeyFrame.h b/include/KeyFrame.h
+index 67f4348..71e3a5d 100644
+--- a/include/KeyFrame.h
++++ b/include/KeyFrame.h
+@@ -21,6 +21,13 @@
+ #ifndef KEYFRAME_H
+ #define KEYFRAME_H
+ 
++#include <stddef.h>
++#include <opencv2/core.hpp>
++#include <mutex>
++#include <map>
++#include <set>
++#include <vector>
++
+ #include "MapPoint.h"
+ #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
+ #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+@@ -29,8 +36,6 @@
+ #include "Frame.h"
+ #include "KeyFrameDatabase.h"
+ 
+-#include <mutex>
+-
+ 
+ namespace ORB_SLAM2
+ {
+diff --git a/include/LocalMapping.h b/include/LocalMapping.h
+index 1361a57..5cf34dc 100644
+--- a/include/LocalMapping.h
++++ b/include/LocalMapping.h
+@@ -21,14 +21,16 @@
+ #ifndef LOCALMAPPING_H
+ #define LOCALMAPPING_H
+ 
++#include <opencv2/core.hpp>
++#include <mutex>
++#include <list>
++
+ #include "KeyFrame.h"
+ #include "Map.h"
+ #include "LoopClosing.h"
+ #include "Tracking.h"
+ #include "KeyFrameDatabase.h"
+ 
+-#include <mutex>
+-
+ 
+ namespace ORB_SLAM2
+ {
+@@ -36,6 +38,8 @@ namespace ORB_SLAM2
+ class Tracking;
+ class LoopClosing;
+ class Map;
++class KeyFrame;
++class MapPoint;
+ 
+ class LocalMapping
+ {
+diff --git a/include/LoopClosing.h b/include/LoopClosing.h
+index 7eb0416..abcc167 100644
+--- a/include/LoopClosing.h
++++ b/include/LoopClosing.h
+@@ -21,17 +21,25 @@
+ #ifndef LOOPCLOSING_H
+ #define LOOPCLOSING_H
+ 
++#include <opencv2/core.hpp>
++#include <thread>
++#include <mutex>
++#include <Eigen/Core>
++#include <functional>
++#include <list>
++#include <map>
++#include <set>
++#include <utility>
++#include <vector>
++
+ #include "KeyFrame.h"
+ #include "LocalMapping.h"
+ #include "Map.h"
+ #include "ORBVocabulary.h"
+ #include "Tracking.h"
+-
+ #include "KeyFrameDatabase.h"
+-
+-#include <thread>
+-#include <mutex>
+ #include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
++#include "Thirdparty/g2o/g2o/types/sim3.h"
+ 
+ namespace ORB_SLAM2
+ {
+@@ -39,6 +47,9 @@ namespace ORB_SLAM2
+ class Tracking;
+ class LocalMapping;
+ class KeyFrameDatabase;
++class KeyFrame;
++class Map;
++class MapPoint;
+ 
+ 
+ class LoopClosing
+@@ -47,7 +58,7 @@ public:
+ 
+     typedef pair<set<KeyFrame*>,int> ConsistentGroup;    
+     typedef map<KeyFrame*,g2o::Sim3,std::less<KeyFrame*>,
+-        Eigen::aligned_allocator<std::pair<const KeyFrame*, g2o::Sim3> > > KeyFrameAndPose;
++        Eigen::aligned_allocator<std::pair<KeyFrame* const, g2o::Sim3> > > KeyFrameAndPose;
+ 
+ public:
+ 
+diff --git a/include/Map.h b/include/Map.h
+index a75339f..554f13e 100644
+--- a/include/Map.h
++++ b/include/Map.h
+@@ -21,13 +21,15 @@
+ #ifndef MAP_H
+ #define MAP_H
+ 
+-#include "MapPoint.h"
+-#include "KeyFrame.h"
+ #include <set>
+-
+ #include <mutex>
++#include <vector>
+ 
+-
++// #include "MapPoint.h"
++#include "KeyFrame.h"
++#include <unordered_set>
++#include <queue>
++#include <tuple>
+ 
+ namespace ORB_SLAM2
+ {
+@@ -35,6 +37,83 @@ namespace ORB_SLAM2
+ class MapPoint;
+ class KeyFrame;
+ 
++
++class MappingOperation
++{
++
++public:
++    enum OprType{
++        LocalMappingBA = 1,
++        LoopClosingBA = 2
++    };
++
++private:
++    MappingOperation(
++        const MappingOperation &opr,
++        const std::lock_guard<std::mutex> &,
++        const std::lock_guard<std::mutex> &)
++        : mvAssociatedKeyFrames(std::move(opr.mvAssociatedKeyFrames)),
++          mvAssociatedMapPoints(std::move(opr.mvAssociatedMapPoints)),
++          meOperationType(opr.meOperationType)
++    {}
++
++public:
++    MappingOperation(OprType type)
++    : meOperationType(type){}
++
++    MappingOperation(const MappingOperation &opr)
++        : MappingOperation(
++            opr,
++            std::lock_guard<std::mutex>(opr.mMutexKeyFrames),
++            std::lock_guard<std::mutex>(opr.mMutexMapPoints))
++    {}
++
++public:
++    void reserveKeyFrames(const std::size_t nKFs)
++    {
++        mvAssociatedKeyFrames.reserve(nKFs);
++    }
++
++    void addKeyFrame(KeyFrame* pKF, bool isLoopClosureKF = false)
++    {
++        std::unique_lock<std::mutex> lock(mMutexKeyFrames);
++        mvAssociatedKeyFrames.emplace_back(pKF);
++    }
++
++    inline const std::vector<ORB_SLAM2::KeyFrame*>& getAssociatedKeyFrames() const { return mvAssociatedKeyFrames; }
++
++    void reserveMapPoints(const std::size_t nMPs)
++    {
++        int length = nMPs * 3;
++        mvAssociatedMapPoints.reserve(length);
++        }
++
++    void addMapPoint(MapPoint* pMP)
++    {
++        std::unique_lock<std::mutex> lock(mMutexMapPoints);
++        mvAssociatedMapPoints.emplace_back(pMP);
++    }
++
++    // Below even if the point changes coordinates and we read a position that doesn't correspond to the coordinates it had at the time of creation, it is not bad considering that the position is even more optimized
++    inline const std::vector<ORB_SLAM2::MapPoint*>& getAssociatedMapPoints() const { return mvAssociatedMapPoints; }
++
++
++public:
++    // Type
++    OprType meOperationType;
++
++protected:
++    // Data
++    std::vector<ORB_SLAM2::MapPoint*> mvAssociatedMapPoints;
++
++    std::vector<KeyFrame*> mvAssociatedKeyFrames;
++
++    // Mutex
++    mutable std::mutex mMutexMapPoints;
++    mutable std::mutex mMutexKeyFrames;
++};
++
++
+ class Map
+ {
+ public:
+@@ -51,6 +130,7 @@ public:
+     std::vector<KeyFrame*> GetAllKeyFrames();
+     std::vector<MapPoint*> GetAllMapPoints();
+     std::vector<MapPoint*> GetReferenceMapPoints();
++    // std::unordered_set<unsigned long> GetCurrentKeyFrameIds();
+ 
+     long unsigned int MapPointsInMap();
+     long unsigned  KeyFramesInMap();
+@@ -66,7 +146,24 @@ public:
+     // This avoid that two points are created simultaneously in separate threads (id conflict)
+     std::mutex mMutexPointCreation;
+ 
++
++    void pushMappingOperation(MappingOperation opr);
++    MappingOperation getAndPopMappingOperation();
++    bool hasMappingOperation();
++    void clearMappingOperation();
++
++    inline int getMappingOperationQueueSize()
++    {
++        std::lock_guard<std::mutex> lock(mMutexMappingOperations);
++        return mqMappingOperations.size();
++    }
++
++
++
++
+ protected:
++    std::queue<MappingOperation> mqMappingOperations;
++
+     std::set<MapPoint*> mspMapPoints;
+     std::set<KeyFrame*> mspKeyFrames;
+ 
+@@ -78,6 +175,8 @@ protected:
+     int mnBigChangeIdx;
+ 
+     std::mutex mMutexMap;
++    std::mutex mMutexMappingOperations;
++
+ };
+ 
+ } //namespace ORB_SLAM
+diff --git a/include/MapPoint.h b/include/MapPoint.h
+index f26893d..3fc3159 100644
+--- a/include/MapPoint.h
++++ b/include/MapPoint.h
+@@ -23,7 +23,6 @@
+ 
+ #include"KeyFrame.h"
+ #include"Frame.h"
+-#include"Map.h"
+ 
+ #include<opencv2/core/core.hpp>
+ #include<mutex>
+@@ -45,6 +44,9 @@ public:
+     void SetWorldPos(const cv::Mat &Pos);
+     cv::Mat GetWorldPos();
+ 
++    void setRetrieved(const bool retrived);
++    bool isRetrieved();
++
+     cv::Mat GetNormal();
+     KeyFrame* GetReferenceKeyFrame();
+ 
+@@ -117,6 +119,9 @@ protected:
+      // Position in absolute coordinates
+      cv::Mat mWorldPos;
+ 
++     // Flag
++     bool mbRetrieved;
++
+      // Keyframes observing the point and associated index in keyframe
+      std::map<KeyFrame*,size_t> mObservations;
+ 
+@@ -145,6 +150,8 @@ protected:
+ 
+      std::mutex mMutexPos;
+      std::mutex mMutexFeatures;
++     std::mutex mMutexRetrieval;
++
+ };
+ 
+ } //namespace ORB_SLAM
+diff --git a/include/ORBextractor.h b/include/ORBextractor.h
+index 66e8e7a..b4e244d 100644
+--- a/include/ORBextractor.h
++++ b/include/ORBextractor.h
+@@ -23,7 +23,7 @@
+ 
+ #include <vector>
+ #include <list>
+-#include <opencv/cv.h>
++#include <opencv2/core.hpp>
+ 
+ 
+ namespace ORB_SLAM2
+diff --git a/include/Optimizer.h b/include/Optimizer.h
+index 2c4378e..8bcc413 100644
+--- a/include/Optimizer.h
++++ b/include/Optimizer.h
+@@ -21,18 +21,28 @@
+ #ifndef OPTIMIZER_H
+ #define OPTIMIZER_H
+ 
++#include <stddef.h>
++#include <map>
++#include <set>
++#include <vector>
++
+ #include "Map.h"
+ #include "MapPoint.h"
+ #include "KeyFrame.h"
+ #include "LoopClosing.h"
+ #include "Frame.h"
+-
+ #include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
+ 
++namespace g2o { struct Sim3; }
++
+ namespace ORB_SLAM2
+ {
+ 
+ class LoopClosing;
++class Frame;
++class KeyFrame;
++class Map;
++class MapPoint;
+ 
+ class Optimizer
+ {
+@@ -42,7 +52,7 @@ public:
+                                  const bool bRobust = true);
+     void static GlobalBundleAdjustemnt(Map* pMap, int nIterations=5, bool *pbStopFlag=NULL,
+                                        const unsigned long nLoopKF=0, const bool bRobust = true);
+-    void static LocalBundleAdjustment(KeyFrame* pKF, bool *pbStopFlag, Map *pMap);
++    void static LocalBundleAdjustment(KeyFrame* pKF, bool *pbStopFlag, Map *pMap, MappingOperation& opr);
+     int static PoseOptimization(Frame* pFrame);
+ 
+     // if bFixScale is true, 6DoF optimization (stereo,rgbd), 7DoF otherwise (mono)
+diff --git a/include/PnPsolver.h b/include/PnPsolver.h
+index f92544f..5558dcb 100644
+--- a/include/PnPsolver.h
++++ b/include/PnPsolver.h
+@@ -52,11 +52,18 @@
+ #define PNPSOLVER_H
+ 
+ #include <opencv2/core/core.hpp>
++#include <opencv2/core/core_c.h>
++#include <stddef.h>
++#include <opencv2/core.hpp>
++#include <vector>
++
+ #include "MapPoint.h"
+ #include "Frame.h"
+ 
+ namespace ORB_SLAM2
+ {
++class Frame;
++class MapPoint;
+ 
+ class PnPsolver {
+  public:
+diff --git a/include/Sim3Solver.h b/include/Sim3Solver.h
+index 9af66cb..35bb088 100644
+--- a/include/Sim3Solver.h
++++ b/include/Sim3Solver.h
+@@ -23,6 +23,8 @@
+ #define SIM3SOLVER_H
+ 
+ #include <opencv2/opencv.hpp>
++#include <stddef.h>
++#include <opencv2/core.hpp>
+ #include <vector>
+ 
+ #include "KeyFrame.h"
+@@ -31,6 +33,8 @@
+ 
+ namespace ORB_SLAM2
+ {
++class KeyFrame;
++class MapPoint;
+ 
+ class Sim3Solver
+ {
+diff --git a/include/System.h b/include/System.h
+index b377b45..994c5bc 100644
+--- a/include/System.h
++++ b/include/System.h
+@@ -119,9 +119,17 @@ public:
+     // Information from most recent processed frame
+     // You can call this right after TrackMonocular (or stereo or RGBD)
+     int GetTrackingState();
++    vector<KeyFrame*> GetKeyFrames() const;
++    Tracking* GetTracker() const;
+     std::vector<MapPoint*> GetTrackedMapPoints();
++    Map* GetMap();
+     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
+ 
++    inline std::mutex& getmMutexState()
++    {
++        return mMutexState;
++    }
++
+ private:
+ 
+     // Input sensor
+diff --git a/include/Tracking.h b/include/Tracking.h
+index 5aaa93e..ecfea40 100644
+--- a/include/Tracking.h
++++ b/include/Tracking.h
+@@ -23,6 +23,7 @@
+ #define TRACKING_H
+ 
+ #include<opencv2/core/core.hpp>
++#include<opencv2/imgproc/imgproc_c.h>
+ #include<opencv2/features2d/features2d.hpp>
+ 
+ #include"Viewer.h"
+@@ -105,10 +106,14 @@ public:
+ 
+     // Lists used to recover the full camera trajectory at the end of the execution.
+     // Basically we store the reference keyframe for each frame and its relative transformation
+-    list<cv::Mat> mlRelativeFramePoses;
+-    list<KeyFrame*> mlpReferences;
+-    list<double> mlFrameTimes;
+-    list<bool> mlbLost;
++    struct TrackedFrame
++    {
++        cv::Mat relative_frame_pose;
++        KeyFrame* reference_keyframe;
++        double time;
++        bool lost;
++    };
++    list<TrackedFrame> tracked_frames;
+ 
+     // True if local mapping is deactivated and we are performing only localization
+     bool mbOnlyTracking;
+diff --git a/include/Viewer.h b/include/Viewer.h
+index 251e223..c842ed4 100644
+--- a/include/Viewer.h
++++ b/include/Viewer.h
+@@ -22,13 +22,14 @@
+ #ifndef VIEWER_H
+ #define VIEWER_H
+ 
++#include <mutex>
++#include <string>
++
+ #include "FrameDrawer.h"
+ #include "MapDrawer.h"
+ #include "Tracking.h"
+ #include "System.h"
+ 
+-#include <mutex>
+-
+ namespace ORB_SLAM2
+ {
+ 
+diff --git a/src/Converter.cc b/src/Converter.cc
+index 00ea8ee..744b64c 100644
+--- a/src/Converter.cc
++++ b/src/Converter.cc
+@@ -21,6 +21,10 @@
+ 
+ #include "Converter.h"
+ 
++#include <Eigen/Core>
++#include <Eigen/Geometry>
++#include <algorithm>
++
+ namespace ORB_SLAM2
+ {
+ 
+diff --git a/src/Frame.cc b/src/Frame.cc
+index 0e37d49..870c4ae 100644
+--- a/src/Frame.cc
++++ b/src/Frame.cc
+@@ -19,9 +19,20 @@
+ */
+ 
+ #include "Frame.h"
++#include <ext/alloc_traits.h>
++#include <ext/new_allocator.h>
++#include <limits.h>
++#include <math.h>
++#include <opencv2/calib3d.hpp>
++#include <thread>
++#include <algorithm>
++#include <memory>
++#include <utility>
++
+ #include "Converter.h"
+ #include "ORBmatcher.h"
+-#include <thread>
++#include "MapPoint.h"
++#include "ORBextractor.h"
+ 
+ namespace ORB_SLAM2
+ {
+@@ -187,9 +198,14 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
+     mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
+     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
+ 
++
++    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+     // ORB extraction
+     ExtractORB(0,imGray);
++    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
++    // std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+ 
++    // std::cout << "Extract ORB took in total: " << time_span.count() << " seconds" << std::endl;
+     N = mvKeys.size();
+ 
+     if(mvKeys.empty())
+diff --git a/src/FrameDrawer.cc b/src/FrameDrawer.cc
+index e23b86c..236f5cc 100644
+--- a/src/FrameDrawer.cc
++++ b/src/FrameDrawer.cc
+@@ -19,10 +19,15 @@
+ */
+ 
+ #include "FrameDrawer.h"
+-#include "Tracking.h"
+ 
+-#include <opencv2/core/core.hpp>
+-#include <opencv2/highgui/highgui.hpp>
++#include <opencv2/imgproc.hpp>
++#include <memory>
++#include <ostream>
++
++#include "Tracking.h"
++#include "Frame.h"
++#include "Map.h"
++#include "MapPoint.h"
+ 
+ #include<mutex>
+ 
+diff --git a/src/Initializer.cc b/src/Initializer.cc
+index 6094b8f..357301a 100644
+--- a/src/Initializer.cc
++++ b/src/Initializer.cc
+@@ -20,10 +20,15 @@
+ 
+ #include "Initializer.h"
+ 
+-#include "Thirdparty/DBoW2/DUtils/Random.h"
++#include <ext/alloc_traits.h>
++#include <algorithm>
++#include <cmath>
++#include <functional>
++#include <memory>
++#include <type_traits>
+ 
+-#include "Optimizer.h"
+-#include "ORBmatcher.h"
++#include "Thirdparty/DBoW2/DUtils/Random.h"
++#include "Frame.h"
+ 
+ #include<thread>
+ 
+diff --git a/src/KeyFrame.cc b/src/KeyFrame.cc
+index 4ef1e78..eb0abfc 100644
+--- a/src/KeyFrame.cc
++++ b/src/KeyFrame.cc
+@@ -19,8 +19,20 @@
+ */
+ 
+ #include "KeyFrame.h"
++
++#include <ext/alloc_traits.h>
++#include <math.h>
++#include <algorithm>
++#include <list>
++#include <memory>
++#include <utility>
++
+ #include "Converter.h"
+-#include "ORBmatcher.h"
++#include "Frame.h"
++#include "KeyFrameDatabase.h"
++#include "Map.h"
++#include "MapPoint.h"
++
+ #include<mutex>
+ 
+ namespace ORB_SLAM2
+diff --git a/src/KeyFrameDatabase.cc b/src/KeyFrameDatabase.cc
+index 826860c..7328344 100644
+--- a/src/KeyFrameDatabase.cc
++++ b/src/KeyFrameDatabase.cc
+@@ -20,8 +20,16 @@
+ 
+ #include "KeyFrameDatabase.h"
+ 
++#include <algorithm>
++#include <iosfwd>
++#include <map>
++#include <memory>
++#include <set>
++#include <utility>
++
+ #include "KeyFrame.h"
+ #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
++#include "Frame.h"
+ 
+ #include<mutex>
+ 
+diff --git a/src/LocalMapping.cc b/src/LocalMapping.cc
+index 6c87a6e..0681019 100644
+--- a/src/LocalMapping.cc
++++ b/src/LocalMapping.cc
+@@ -19,9 +19,23 @@
+ */
+ 
+ #include "LocalMapping.h"
++
++#include <unistd.h>
++#include <math.h>
++#include <stddef.h>
++#include <algorithm>
++#include <iostream>
++#include <map>
++#include <memory>
++#include <utility>
++#include <vector>
++
+ #include "LoopClosing.h"
+ #include "ORBmatcher.h"
+ #include "Optimizer.h"
++#include "KeyFrame.h"
++#include "Map.h"
++#include "MapPoint.h"
+ 
+ #include<mutex>
+ 
+@@ -78,7 +92,13 @@ void LocalMapping::Run()
+             {
+                 // Local BA
+                 if(mpMap->KeyFramesInMap()>2)
+-                    Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&mbAbortBA, mpMap);
++                {
++                    MappingOperation opr(MappingOperation::OprType::LocalMappingBA);
++                    Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame,&mbAbortBA, mpMap, opr);
++                    std::cout << "[ORB-SLAM2 system] Added a MappingOperation to the queue (LocalMapping::Run)" << std::endl;
++
++                    mpMap->pushMappingOperation(opr);
++                }
+ 
+                 // Check redundant local Keyframes
+                 KeyFrameCulling();
+diff --git a/src/LoopClosing.cc b/src/LoopClosing.cc
+index 5e317dd..9c3e6b1 100644
+--- a/src/LoopClosing.cc
++++ b/src/LoopClosing.cc
+@@ -20,13 +20,25 @@
+ 
+ #include "LoopClosing.h"
+ 
+-#include "Sim3Solver.h"
++#include <unistd.h>
++#include <ext/alloc_traits.h>
++#include <stddef.h>
++#include <Eigen/Geometry>
++#include <algorithm>
++#include <iostream>
++#include <memory>
+ 
++#include "Sim3Solver.h"
+ #include "Converter.h"
+-
+ #include "Optimizer.h"
+-
+ #include "ORBmatcher.h"
++#include "KeyFrame.h"
++#include "KeyFrameDatabase.h"
++#include "LocalMapping.h"
++#include "Map.h"
++#include "MapPoint.h"
++
++namespace DBoW2 { class BowVector; }
+ 
+ #include<mutex>
+ #include<thread>
+@@ -71,7 +83,8 @@ void LoopClosing::Run()
+                if(ComputeSim3())
+                {
+                    // Perform loop fusion and pose graph optimization
+-                   CorrectLoop();
++                    CorrectLoop();
++
+                }
+             }
+         }       
+@@ -576,11 +589,13 @@ void LoopClosing::CorrectLoop()
+     mbRunningGBA = true;
+     mbFinishedGBA = false;
+     mbStopGBA = false;
++
+     mpThreadGBA = new thread(&LoopClosing::RunGlobalBundleAdjustment,this,mpCurrentKF->mnId);
+ 
+     // Loop closed. Release Local Mapping.
+     mpLocalMapper->Release();    
+ 
++
+     mLastLoopKFid = mpCurrentKF->mnId;   
+ }
+ 
+@@ -645,6 +660,7 @@ void LoopClosing::ResetIfRequested()
+ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
+ {
+     cout << "Starting Global Bundle Adjustment" << endl;
++    MappingOperation opr(MappingOperation::OprType::LoopClosingBA);
+ 
+     int idx =  mnFullBAIdx;
+     Optimizer::GlobalBundleAdjustemnt(mpMap,10,&mbStopGBA,nLoopKF,false);
+@@ -676,6 +692,7 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
+             // Correct keyframes starting at map first keyframe
+             list<KeyFrame*> lpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(),mpMap->mvpKeyFrameOrigins.end());
+ 
++            opr.reserveKeyFrames(lpKFtoCheck.size());
+             while(!lpKFtoCheck.empty())
+             {
+                 KeyFrame* pKF = lpKFtoCheck.front();
+@@ -693,15 +710,17 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
+                     }
+                     lpKFtoCheck.push_back(pChild);
+                 }
+-
+                 pKF->mTcwBefGBA = pKF->GetPose();
+                 pKF->SetPose(pKF->mTcwGBA);
++                opr.addKeyFrame(pKF);
+                 lpKFtoCheck.pop_front();
+             }
+ 
++
+             // Correct MapPoints
+             const vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
+ 
++            //opr.reserveMapPoints(vpMPs.size());
+             for(size_t i=0; i<vpMPs.size(); i++)
+             {
+                 MapPoint* pMP = vpMPs[i];
+@@ -713,6 +732,8 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
+                 {
+                     // If optimized by Global BA, just update
+                     pMP->SetWorldPos(pMP->mPosGBA);
++                    //opr.addMapPoint(pMP);
++
+                 }
+                 else
+                 {
+@@ -733,11 +754,13 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
+                     cv::Mat twc = Twc.rowRange(0,3).col(3);
+ 
+                     pMP->SetWorldPos(Rwc*Xc+twc);
++
+                 }
+             }            
+ 
+             mpMap->InformNewBigChange();
+-
++            std::cout << "[ORB-SLAM2 system] Added a MappingOperation to the queue (LoopClosing::RunGlobalBundleAdjustment)" << std::endl;
++            mpMap->pushMappingOperation(opr);
+             mpLocalMapper->Release();
+ 
+             cout << "Map updated!" << endl;
+diff --git a/src/Map.cc b/src/Map.cc
+index 15fcd86..38cc9d5 100644
+--- a/src/Map.cc
++++ b/src/Map.cc
+@@ -20,6 +20,9 @@
+ 
+ #include "Map.h"
+ 
++#include "KeyFrame.h"
++#include "MapPoint.h"
++
+ #include<mutex>
+ 
+ namespace ORB_SLAM2
+@@ -109,6 +112,18 @@ vector<MapPoint*> Map::GetReferenceMapPoints()
+     return mvpReferenceMapPoints;
+ }
+ 
++// std::unordered_set<unsigned long> Atlas::GetCurrentKeyFrameIds()
++// {
++//     unique_lock<mutex> lock(mMutexAtlas);
++//     auto vpKeyFrames = mpCurrentMap->GetAllKeyFrames();
++//     std::unordered_set<unsigned long> usulKeyFrameIds;
++//     usulKeyFrameIds.rehash(vpKeyFrames.size());
++//     usulKeyFrameIds.reserve(vpKeyFrames.size());
++//     for (const auto& pKF : vpKeyFrames)
++//         usulKeyFrameIds.insert(pKF->mnId);
++//     return usulKeyFrameIds;
++// }
++
+ long unsigned int Map::GetMaxKFid()
+ {
+     unique_lock<mutex> lock(mMutexMap);
+@@ -130,4 +145,32 @@ void Map::clear()
+     mvpKeyFrameOrigins.clear();
+ }
+ 
++void Map::pushMappingOperation(MappingOperation opr)
++{
++    std::unique_lock<std::mutex> lock(mMutexMappingOperations);
++    this->mqMappingOperations.push(opr);
++}
++
++MappingOperation Map::getAndPopMappingOperation()
++{
++    std::unique_lock<std::mutex> lock(mMutexMappingOperations);
++    MappingOperation opr = this->mqMappingOperations.front();
++    mqMappingOperations.pop();
++    return opr;
++}
++
++bool Map::hasMappingOperation()
++{
++    std::unique_lock<std::mutex> lock(mMutexMappingOperations);
++    return !mqMappingOperations.empty();
++}
++
++void Map::clearMappingOperation()
++{
++    std::unique_lock<std::mutex> lock(mMutexMappingOperations);
++    while (!mqMappingOperations.empty())
++        mqMappingOperations.pop();
++}
++
++
+ } //namespace ORB_SLAM
+diff --git a/src/MapDrawer.cc b/src/MapDrawer.cc
+index 4d9990b..22ddf63 100644
+--- a/src/MapDrawer.cc
++++ b/src/MapDrawer.cc
+@@ -19,10 +19,17 @@
+ */
+ 
+ #include "MapDrawer.h"
+-#include "MapPoint.h"
+-#include "KeyFrame.h"
++
+ #include <pangolin/pangolin.h>
++#include <GL/glew.h>
++#include <stddef.h>
+ #include <mutex>
++#include <set>
++#include <vector>
++
++#include "MapPoint.h"
++#include "KeyFrame.h"
++#include "Map.h"
+ 
+ namespace ORB_SLAM2
+ {
+diff --git a/src/MapPoint.cc b/src/MapPoint.cc
+index 3b29211..4c611f4 100644
+--- a/src/MapPoint.cc
++++ b/src/MapPoint.cc
+@@ -19,7 +19,18 @@
+ */
+ 
+ #include "MapPoint.h"
++
++#include <limits.h>
++#include <math.h>
++#include <algorithm>
++#include <memory>
++#include <utility>
++#include <vector>
++
+ #include "ORBmatcher.h"
++#include "Frame.h"
++#include "KeyFrame.h"
++#include "Map.h"
+ 
+ #include<mutex>
+ 
+@@ -33,7 +44,7 @@ MapPoint::MapPoint(const cv::Mat &Pos, KeyFrame *pRefKF, Map* pMap):
+     mnFirstKFid(pRefKF->mnId), mnFirstFrame(pRefKF->mnFrameId), nObs(0), mnTrackReferenceForFrame(0),
+     mnLastFrameSeen(0), mnBALocalForKF(0), mnFuseCandidateForKF(0), mnLoopPointForKF(0), mnCorrectedByKF(0),
+     mnCorrectedReference(0), mnBAGlobalForKF(0), mpRefKF(pRefKF), mnVisible(1), mnFound(1), mbBad(false),
+-    mpReplaced(static_cast<MapPoint*>(NULL)), mfMinDistance(0), mfMaxDistance(0), mpMap(pMap)
++    mpReplaced(static_cast<MapPoint*>(NULL)), mfMinDistance(0), mfMaxDistance(0), mpMap(pMap), mbRetrieved(false)
+ {
+     Pos.copyTo(mWorldPos);
+     mNormalVector = cv::Mat::zeros(3,1,CV_32F);
+@@ -47,7 +58,7 @@ MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF
+     mnFirstKFid(-1), mnFirstFrame(pFrame->mnId), nObs(0), mnTrackReferenceForFrame(0), mnLastFrameSeen(0),
+     mnBALocalForKF(0), mnFuseCandidateForKF(0),mnLoopPointForKF(0), mnCorrectedByKF(0),
+     mnCorrectedReference(0), mnBAGlobalForKF(0), mpRefKF(static_cast<KeyFrame*>(NULL)), mnVisible(1),
+-    mnFound(1), mbBad(false), mpReplaced(NULL), mpMap(pMap)
++    mnFound(1), mbBad(false), mpReplaced(NULL), mpMap(pMap), mbRetrieved(false)
+ {
+     Pos.copyTo(mWorldPos);
+     cv::Mat Ow = pFrame->GetCameraCenter();
+@@ -83,6 +94,18 @@ cv::Mat MapPoint::GetWorldPos()
+     return mWorldPos.clone();
+ }
+ 
++void MapPoint::setRetrieved(const bool retrieved)
++{
++    unique_lock<mutex> lock(mMutexRetrieval);
++    this->mbRetrieved = retrieved;
++}
++
++bool MapPoint::isRetrieved()
++{
++    unique_lock<mutex> lock(mMutexRetrieval);
++    return this->mbRetrieved;
++}
++
+ cv::Mat MapPoint::GetNormal()
+ {
+     unique_lock<mutex> lock(mMutexPos);
+diff --git a/src/ORBextractor.cc b/src/ORBextractor.cc
+index 14be2ef..ba15e4f 100644
+--- a/src/ORBextractor.cc
++++ b/src/ORBextractor.cc
+@@ -54,14 +54,22 @@
+ */
+ 
+ 
+-#include <opencv2/core/core.hpp>
+-#include <opencv2/highgui/highgui.hpp>
+-#include <opencv2/features2d/features2d.hpp>
+-#include <opencv2/imgproc/imgproc.hpp>
+-#include <vector>
+-
+ #include "ORBextractor.h"
+ 
++#include <assert.h>
++#include <ext/alloc_traits.h>
++#include <math.h>
++#include <opencv2/features2d.hpp>
++#include <opencv2/imgproc.hpp>
++#include <vector>
++#include <algorithm>
++#include <cstddef>
++#include <iterator>
++#include <memory>
++#include <type_traits>
++#include <utility>
++#include <iostream>
++
+ 
+ using namespace cv;
+ using namespace std;
+@@ -1048,14 +1056,17 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
+ 
+     Mat image = _image.getMat();
+     assert(image.type() == CV_8UC1 );
++    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+ 
+     // Pre-compute the scale pyramid
+     ComputePyramid(image);
+-
+     vector < vector<KeyPoint> > allKeypoints;
+     ComputeKeyPointsOctTree(allKeypoints);
+     //ComputeKeyPointsOld(allKeypoints);
++    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
++    // std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+ 
++    // std::cout << "computeKeypoints took: " << time_span.count() << " seconds" << std::endl;
+     Mat descriptors;
+ 
+     int nkeypoints = 0;
+@@ -1083,8 +1094,12 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
+ 
+         // preprocess the resized image
+         Mat workingMat = mvImagePyramid[level].clone();
++        // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+         GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
++        // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
++        // std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+ 
++        // std::cout << "GaussianBlur took: " << time_span.count() << " seconds" << std::endl;
+         // Compute the descriptors
+         Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
+         computeDescriptors(workingMat, keypoints, desc, pattern);
+diff --git a/src/Optimizer.cc b/src/Optimizer.cc
+index 83d9264..bcd29ef 100644
+--- a/src/Optimizer.cc
++++ b/src/Optimizer.cc
+@@ -450,7 +450,7 @@ int Optimizer::PoseOptimization(Frame *pFrame)
+     return nInitialCorrespondences-nBad;
+ }
+ 
+-void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap)
++void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, MappingOperation& opr)
+ {    
+     // Local KeyFrames: First Breath Search from Current Keyframe
+     list<KeyFrame*> lLocalKeyFrames;
+@@ -759,21 +759,29 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
+     // Recover optimized data
+ 
+     //Keyframes
++    opr.reserveKeyFrames(lLocalKeyFrames.size());
+     for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)
+     {
+         KeyFrame* pKF = *lit;
+         g2o::VertexSE3Expmap* vSE3 = static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
+         g2o::SE3Quat SE3quat = vSE3->estimate();
+         pKF->SetPose(Converter::toCvMat(SE3quat));
++
++        opr.addKeyFrame(pKF);
+     }
+ 
+     //Points
++    opr.reserveMapPoints(lLocalMapPoints.size());
+     for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
+     {
+         MapPoint* pMP = *lit;
+         g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+maxKFid+1));
+         pMP->SetWorldPos(Converter::toCvMat(vPoint->estimate()));
+         pMP->UpdateNormalAndDepth();
++        if (!pMP->isRetrieved()) {
++            pMP->setRetrieved(true);
++            opr.addMapPoint(pMP);
++        }
+     }
+ }
+ 
+diff --git a/src/PnPsolver.cc b/src/PnPsolver.cc
+index af3511b..9ad485c 100644
+--- a/src/PnPsolver.cc
++++ b/src/PnPsolver.cc
+@@ -48,15 +48,17 @@
+ *   either expressed or implied, of the FreeBSD Project
+ */
+ 
+-#include <iostream>
+-
+ #include "PnPsolver.h"
+ 
++#include <iostream>
+ #include <vector>
+ #include <cmath>
+-#include <opencv2/core/core.hpp>
+-#include "Thirdparty/DBoW2/DUtils/Random.h"
+ #include <algorithm>
++#include <memory>
++
++#include "Thirdparty/DBoW2/DUtils/Random.h"
++#include "Frame.h"
++#include "MapPoint.h"
+ 
+ using namespace std;
+ 
+diff --git a/src/Sim3Solver.cc b/src/Sim3Solver.cc
+index 4ad44ff..41c0373 100644
+--- a/src/Sim3Solver.cc
++++ b/src/Sim3Solver.cc
+@@ -21,14 +21,17 @@
+ 
+ #include "Sim3Solver.h"
+ 
++#include <ext/alloc_traits.h>
++#include <opencv2/calib3d.hpp>
++#include <opencv2/core/core_c.h>
+ #include <vector>
+ #include <cmath>
+-#include <opencv2/core/core.hpp>
++#include <algorithm>
++#include <memory>
+ 
+ #include "KeyFrame.h"
+-#include "ORBmatcher.h"
+-
+ #include "Thirdparty/DBoW2/DUtils/Random.h"
++#include "MapPoint.h"
+ 
+ namespace ORB_SLAM2
+ {
+diff --git a/src/System.cc b/src/System.cc
+index 8df4157..31e061b 100644
+--- a/src/System.cc
++++ b/src/System.cc
+@@ -21,13 +21,31 @@
+ 
+ 
+ #include "System.h"
+-#include "Converter.h"
+-#include <thread>
++
+ #include <pangolin/pangolin.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <thread>
+ #include <iomanip>
++#include <algorithm>
++#include <iostream>
++#include <list>
++
++#include "Converter.h"
++#include "Frame.h"
++#include "FrameDrawer.h"
++#include "KeyFrame.h"
++#include "KeyFrameDatabase.h"
++#include "LocalMapping.h"
++#include "LoopClosing.h"
++#include "Map.h"
++#include "MapDrawer.h"
++#include "Tracking.h"
++#include "Viewer.h"
+ 
+ namespace ORB_SLAM2
+ {
++class MapPoint;
+ 
+ System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
+                const bool bUseViewer):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
+@@ -343,18 +361,12 @@ void System::SaveTrajectoryTUM(const string &filename)
+     // We need to get first the keyframe pose and then concatenate the relative transformation.
+     // Frames not localized (tracking failure) are not saved.
+ 
+-    // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
+-    // which is true when tracking failed (lbL).
+-    list<ORB_SLAM2::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+-    list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
+-    list<bool>::iterator lbL = mpTracker->mlbLost.begin();
+-    for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(),
+-        lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++, lbL++)
++    for (list<Tracking::TrackedFrame>::iterator iter = mpTracker->tracked_frames.begin(), iter_end = mpTracker->tracked_frames.end(); iter != iter_end; iter++)
+     {
+-        if(*lbL)
++        if(iter->lost)
+             continue;
+ 
+-        KeyFrame* pKF = *lRit;
++        KeyFrame* pKF = iter->reference_keyframe;
+ 
+         cv::Mat Trw = cv::Mat::eye(4,4,CV_32F);
+ 
+@@ -367,13 +379,13 @@ void System::SaveTrajectoryTUM(const string &filename)
+ 
+         Trw = Trw*pKF->GetPose()*Two;
+ 
+-        cv::Mat Tcw = (*lit)*Trw;
++        cv::Mat Tcw = iter->relative_frame_pose*Trw;
+         cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
+         cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
+ 
+         vector<float> q = Converter::toQuaternion(Rwc);
+ 
+-        f << setprecision(6) << *lT << " " <<  setprecision(9) << twc.at<float>(0) << " " << twc.at<float>(1) << " " << twc.at<float>(2) << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
++        f << setprecision(6) << iter->time << " " <<  setprecision(9) << twc.at<float>(0) << " " << twc.at<float>(1) << " " << twc.at<float>(2) << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
+     }
+     f.close();
+     cout << endl << "trajectory saved!" << endl;
+@@ -440,13 +452,9 @@ void System::SaveTrajectoryKITTI(const string &filename)
+     // We need to get first the keyframe pose and then concatenate the relative transformation.
+     // Frames not localized (tracking failure) are not saved.
+ 
+-    // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
+-    // which is true when tracking failed (lbL).
+-    list<ORB_SLAM2::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+-    list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
+-    for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(), lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
++    for (list<Tracking::TrackedFrame>::iterator iter = mpTracker->tracked_frames.begin(), iter_end = mpTracker->tracked_frames.end(); iter != iter_end; iter++)
+     {
+-        ORB_SLAM2::KeyFrame* pKF = *lRit;
++        ORB_SLAM2::KeyFrame* pKF = iter->reference_keyframe;
+ 
+         cv::Mat Trw = cv::Mat::eye(4,4,CV_32F);
+ 
+@@ -459,7 +467,7 @@ void System::SaveTrajectoryKITTI(const string &filename)
+ 
+         Trw = Trw*pKF->GetPose()*Two;
+ 
+-        cv::Mat Tcw = (*lit)*Trw;
++        cv::Mat Tcw = iter->relative_frame_pose*Trw;
+         cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
+         cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
+ 
+@@ -477,12 +485,28 @@ int System::GetTrackingState()
+     return mTrackingState;
+ }
+ 
++vector<KeyFrame*> System::GetKeyFrames() const
++{
++    return mpMap->GetAllKeyFrames();
++}
++
++Tracking* System::GetTracker() const
++{
++    return mpTracker;
++}
++
+ vector<MapPoint*> System::GetTrackedMapPoints()
+ {
+     unique_lock<mutex> lock(mMutexState);
+     return mTrackedMapPoints;
+ }
+ 
++Map* System::GetMap()
++{
++    unique_lock<mutex> lock(mMutexState);
++    return mpMap;
++}
++
+ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
+ {
+     unique_lock<mutex> lock(mMutexState);
+diff --git a/src/Tracking.cc b/src/Tracking.cc
+index 2273b2c..3ee799a 100644
+--- a/src/Tracking.cc
++++ b/src/Tracking.cc
+@@ -22,6 +22,7 @@
+ #include "Tracking.h"
+ 
+ #include<opencv2/core/core.hpp>
++#include<opencv2/imgproc/imgproc_c.h>
+ #include<opencv2/features2d/features2d.hpp>
+ 
+ #include"ORBmatcher.h"
+@@ -33,6 +34,8 @@
+ #include"Optimizer.h"
+ #include"PnPsolver.h"
+ 
++#include <unistd.h>
++
+ #include<iostream>
+ 
+ #include<mutex>
+@@ -270,7 +273,7 @@ void Tracking::Track()
+     {
+         mState = NOT_INITIALIZED;
+     }
+-
++    // std::cout << "I am in track()" << std::endl;
+     mLastProcessedState=mState;
+ 
+     // Get Map Mutex -> Map cannot be changed
+@@ -293,6 +296,8 @@ void Tracking::Track()
+         // System is initialized. Track Frame.
+         bool bOK;
+ 
++        // std::cout << "System is initialized. Track Frame." << std::endl;
++
+         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
+         if(!mbOnlyTracking)
+         {
+@@ -306,13 +311,27 @@ void Tracking::Track()
+ 
+                 if(mVelocity.empty() || mCurrentFrame.mnId<mnLastRelocFrameId+2)
+                 {
++                    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
++
+                     bOK = TrackReferenceKeyFrame();
++                    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
++                    // std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
++
++                    // std::cout << "TrackReferenceKeyFrame 1: " << time_span.count() << " seconds" << std::endl;
+                 }
+                 else
+                 {
+                     bOK = TrackWithMotionModel();
+                     if(!bOK)
++                    {
++                        // std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
++
+                         bOK = TrackReferenceKeyFrame();
++                        // std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
++                        // std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t4 - t3);
++
++                        // std::cout << "TrackReferenceKeyFrame 2: " << time_span.count() << " seconds" << std::endl;
++                    }
+                 }
+             }
+             else
+@@ -341,6 +360,8 @@ void Tracking::Track()
+                     else
+                     {
+                         bOK = TrackReferenceKeyFrame();
++
++
+                     }
+                 }
+                 else
+@@ -455,8 +476,10 @@ void Tracking::Track()
+ 
+             // Check if we need to insert a new keyframe
+             if(NeedNewKeyFrame())
++            {
++                // std::cout << "--- New keyframe added" << std::endl;
+                 CreateNewKeyFrame();
+-
++            }
+             // We allow points with high innovation (considererd outliers by the Huber Function)
+             // pass to the new keyframe, so that bundle adjustment will finally decide
+             // if they are outliers or not. We don't want next frame to estimate its position
+@@ -488,19 +511,19 @@ void Tracking::Track()
+     // Store frame pose information to retrieve the complete camera trajectory afterwards.
+     if(!mCurrentFrame.mTcw.empty())
+     {
+-        cv::Mat Tcr = mCurrentFrame.mTcw*mCurrentFrame.mpReferenceKF->GetPoseInverse();
+-        mlRelativeFramePoses.push_back(Tcr);
+-        mlpReferences.push_back(mpReferenceKF);
+-        mlFrameTimes.push_back(mCurrentFrame.mTimeStamp);
+-        mlbLost.push_back(mState==LOST);
++        TrackedFrame tracked_frame;
++        tracked_frame.relative_frame_pose = mCurrentFrame.mTcw*mCurrentFrame.mpReferenceKF->GetPoseInverse();
++        tracked_frame.reference_keyframe = mpReferenceKF;
++        tracked_frame.time = mCurrentFrame.mTimeStamp;
++        tracked_frame.lost = (mState == LOST);
++        tracked_frames.push_back(tracked_frame);
+     }
+     else
+     {
+         // This can happen if tracking is lost
+-        mlRelativeFramePoses.push_back(mlRelativeFramePoses.back());
+-        mlpReferences.push_back(mlpReferences.back());
+-        mlFrameTimes.push_back(mlFrameTimes.back());
+-        mlbLost.push_back(mState==LOST);
++        TrackedFrame tracked_frame = tracked_frames.back();
++        tracked_frame.lost = (mState == LOST);
++        tracked_frames.push_back(tracked_frame);
+     }
+ 
+ }
+@@ -594,9 +617,14 @@ void Tracking::MonocularInitialization()
+             fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
+             return;
+         }
+-
++        // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+         // Find correspondences
+         ORBmatcher matcher(0.9,true);
++
++        // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
++        // std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
++
++        // std::cout << "ORBmatching took: " << time_span.count() << " seconds" << std::endl;
+         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
+ 
+         // Check if there are enough correspondences
+@@ -645,6 +673,8 @@ void Tracking::CreateInitialMapMonocular()
+     pKFcur->ComputeBoW();
+ 
+     // Insert KFs in the map
++    std::cout << "--- First two keyframes added" << std::endl;
++
+     mpMap->AddKeyFrame(pKFini);
+     mpMap->AddKeyFrame(pKFcur);
+ 
+@@ -712,6 +742,7 @@ void Tracking::CreateInitialMapMonocular()
+         }
+     }
+ 
++    std::cout << "--- First two keyframes added at local mapper" << std::endl;
+     mpLocalMapper->InsertKeyFrame(pKFini);
+     mpLocalMapper->InsertKeyFrame(pKFcur);
+ 
+@@ -761,11 +792,18 @@ bool Tracking::TrackReferenceKeyFrame()
+ 
+     // We perform first an ORB matching with the reference keyframe
+     // If enough matches are found we setup a PnP solver
++
++    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+     ORBmatcher matcher(0.7,true);
++
++
+     vector<MapPoint*> vpMapPointMatches;
+ 
+     int nmatches = matcher.SearchByBoW(mpReferenceKF,mCurrentFrame,vpMapPointMatches);
++    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
++    // std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+ 
++    // std::cout << "ORBmatcher and searchbybow in track reference keyframe took: " << time_span.count() << " seconds" << std::endl;
+     if(nmatches<15)
+         return false;
+ 
+@@ -802,7 +840,7 @@ void Tracking::UpdateLastFrame()
+ {
+     // Update pose according to reference keyframe
+     KeyFrame* pRef = mLastFrame.mpReferenceKF;
+-    cv::Mat Tlr = mlRelativeFramePoses.back();
++    cv::Mat Tlr = tracked_frames.back().relative_frame_pose;
+ 
+     mLastFrame.SetPose(Tlr*pRef->GetPose());
+ 
+@@ -962,10 +1000,17 @@ bool Tracking::TrackLocalMap()
+         }
+     }
+ 
++
++    std::cout << "\n\nProcessing frame with mCurrentFrame.mnId: " << mCurrentFrame.mnId << " and mnMatchesInliers: " << mnMatchesInliers << ". mnLastRelocFrameId: " << mnLastRelocFrameId << std::endl;
++
++
+     // Decide if the tracking was succesful
+     // More restrictive if there was a relocalization recently
+     if(mCurrentFrame.mnId<mnLastRelocFrameId+mMaxFrames && mnMatchesInliers<50)
+-        return false;
++        {
++            std::cout << "The condition mCurrentFrame.mnID < mnLastRelocFrameId + mMaxFrames has been met " << std::endl;
++            return false;
++        }
+ 
+     if(mnMatchesInliers<30)
+         return false;
+@@ -1044,6 +1089,7 @@ bool Tracking::NeedNewKeyFrame()
+         }
+         else
+         {
++            std::cout << "Local Mapping is not idle " << std::endl;
+             mpLocalMapper->InterruptBA();
+             if(mSensor!=System::MONOCULAR)
+             {
+@@ -1132,6 +1178,7 @@ void Tracking::CreateNewKeyFrame()
+         }
+     }
+ 
++    // std::cout << "--- New keyframe added at local mapper" << std::endl;
+     mpLocalMapper->InsertKeyFrame(pKF);
+ 
+     mpLocalMapper->SetNotStop(false);
+@@ -1540,10 +1587,7 @@ void Tracking::Reset()
+         mpInitializer = static_cast<Initializer*>(NULL);
+     }
+ 
+-    mlRelativeFramePoses.clear();
+-    mlpReferences.clear();
+-    mlFrameTimes.clear();
+-    mlbLost.clear();
++    tracked_frames.clear();
+ 
+     if(mpViewer)
+         mpViewer->Release();
+diff --git a/src/Viewer.cc b/src/Viewer.cc
+index dec3204..4c9fb74 100644
+--- a/src/Viewer.cc
++++ b/src/Viewer.cc
+@@ -19,10 +19,18 @@
+ */
+ 
+ #include "Viewer.h"
+-#include <pangolin/pangolin.h>
+ 
++#include <pangolin/pangolin.h>
++#include <unistd.h>
++#include <GL/glew.h>
++#include <opencv2/core.hpp>
++#include <opencv2/highgui.hpp>
+ #include <mutex>
+ 
++#include "FrameDrawer.h"
++#include "MapDrawer.h"
++#include "System.h"
++
+ namespace ORB_SLAM2
+ {
+ 
