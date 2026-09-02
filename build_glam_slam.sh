@@ -48,6 +48,9 @@ if [ ! -f ".patch_applied" ]; then
     echo "Applying patch to ORB_SLAM2..."
     git apply ../ORB_SLAM2_patch/custom_orbslam2.patch
     
+    echo "Copying additional ORB-SLAM2 config files..."
+    cp ../ORB_SLAM2_patch/*.yaml Examples/Monocular/
+
     # Create the marker file so the script knows to skip this next time
     touch .patch_applied
     echo "Patch applied successfully."

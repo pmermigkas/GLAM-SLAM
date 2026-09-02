@@ -93,8 +93,7 @@ index e4faba1..cd986da 100644
 +Camera.image_width: 1241
 +
  # Camera frames per second 
--Camera.fps: 10.0
-+Camera.fps: 10.0 #10.0
+ Camera.fps: 10.0
  
  # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
  Camera.RGB: 1
@@ -111,13 +110,12 @@ diff --git a/Examples/Monocular/KITTI03.yaml b/Examples/Monocular/KITTI03.yaml
 index b081bd0..77deec1 100644
 --- a/Examples/Monocular/KITTI03.yaml
 +++ b/Examples/Monocular/KITTI03.yaml
-@@ -15,6 +15,10 @@ Camera.k2: 0.0
+@@ -15,6 +15,9 @@ Camera.k2: 0.0
  Camera.p1: 0.0
  Camera.p2: 0.0
  
 +Camera.image_height: 375
 +Camera.image_width: 1242
-+
 +
  # Camera frames per second 
  Camera.fps: 10.0
@@ -135,13 +133,12 @@ diff --git a/Examples/Monocular/KITTI04-12.yaml b/Examples/Monocular/KITTI04-12.
 index e0e18c7..4b76c85 100644
 --- a/Examples/Monocular/KITTI04-12.yaml
 +++ b/Examples/Monocular/KITTI04-12.yaml
-@@ -15,6 +15,10 @@ Camera.k2: 0.0
+@@ -15,6 +15,9 @@ Camera.k2: 0.0
  Camera.p1: 0.0
  Camera.p2: 0.0
  
 +Camera.image_height: 370
 +Camera.image_width: 1226
-+
 +
  # Camera frames per second 
  Camera.fps: 10.0
